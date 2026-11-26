@@ -1821,179 +1821,173 @@ local TargetFlingCorner = Instance.new("UICorner")
 TargetFlingCorner.CornerRadius = UDim.new(0, 6)
 TargetFlingCorner.Parent = TargetFlingBtn
 
+local function SkidFling(TargetPlayer)
+    if not TargetPlayer or not TargetPlayer.Character then
+        return
+    end
+
+    local Character = localPlayer.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local RootPart = Humanoid and Humanoid.RootPart
+
+    local TCharacter = TargetPlayer.Character
+    local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+    local TRootPart = THumanoid and THumanoid.RootPart
+    local THead = TCharacter:FindFirstChild("Head")
+    local Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+    local Handle = Accessory and Accessory:FindFirstChild("Handle")
+
+    if Character and Humanoid and RootPart then
+        local oldPos = RootPart.CFrame
+
+        if not TCharacter:FindFirstChildWhichIsA("BasePart") then
+            return
+        end
+
+        local FPos = function(BasePart, Pos, Ang)
+            RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+            Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+            RootPart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+            RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+        end
+
+        local SFBasePart = function(BasePart)
+            local TimeToWait = 2
+            local Time = tick()
+            local Angle = 0
+
+            repeat
+                if RootPart and THumanoid then
+                    if BasePart.Velocity.Magnitude < 50 then
+                        Angle = Angle + 100
+
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+                    else
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(-90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                        task.wait()
+                    end
+                else
+                    break
+                end
+            until BasePart.Velocity.Magnitude > 500 or BasePart.Parent ~= TargetPlayer.Character or TargetPlayer.Parent ~= Players or TargetPlayer.Character ~= TCharacter or THumanoid.Sit or Humanoid.Health <= 0 or tick() > Time + TimeToWait or not flingRunning
+        end
+
+        local oldFPDH = workspace.FallenPartsDestroyHeight
+        workspace.FallenPartsDestroyHeight = 0/0
+
+        local BV = Instance.new("BodyVelocity")
+        BV.Name = "EpixVel"
+        BV.Parent = RootPart
+        BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
+        BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+        if TRootPart and THead then
+            if (TRootPart.CFrame.p - THead.CFrame.p).Magnitude > 5 then
+                SFBasePart(THead)
+            else
+                SFBasePart(TRootPart)
+            end
+        elseif TRootPart and not THead then
+            SFBasePart(TRootPart)
+        elseif not TRootPart and THead then
+            SFBasePart(THead)
+        elseif not TRootPart and not THead and Accessory and Handle then
+            SFBasePart(Handle)
+        end
+
+        BV:Destroy()
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        workspace.CurrentCamera.CameraSubject = Humanoid
+
+        repeat
+            RootPart.CFrame = oldPos * CFrame.new(0, 0.5, 0)
+            Character:SetPrimaryPartCFrame(oldPos * CFrame.new(0, 0.5, 0))
+            Humanoid:ChangeState("GettingUp")
+            for _, x in ipairs(Character:GetChildren()) do
+                if x:IsA("BasePart") then
+                    x.Velocity = Vector3.new()
+                    x.RotVelocity = Vector3.new()
+                end
+            end
+            task.wait()
+        until (RootPart.Position - oldPos.Position).Magnitude < 25
+
+        workspace.FallenPartsDestroyHeight = oldFPDH
+    end
+end
+
 local RunFlingLogic = nil
 
 RunFlingLogic = function()
-    if FlingExecuting then return end
-    FlingExecuting = true
-    TargetFlingBtn.Text = "  [Active] Flinging..."
+    if flingRunning then return end
+    flingRunning = true
+    TargetFlingBtn.Text = " [Active] Flinging..."
     TargetFlingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-    local originalPos = nil
-    local char = LocalPlayer.Character
-    local root = getRoot(char)
-    if root then originalPos = root.CFrame end
-
-    local flingNoclipConn = RunService.Stepped:Connect(function()
-        pcall(function()
-            local myChar = LocalPlayer.Character
-            if myChar then
-                for _, v in pairs(myChar:GetDescendants()) do
-                    if v:IsA("BasePart") then v.CanCollide = false end
+    if SelectedTarget == "ALL" then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if not flingRunning then break end
+            if player ~= localPlayer and player.Character then
+                local tRoot = getRoot(player.Character)
+                if tRoot and not isTargetOutOfMap(tRoot) then
+                    SkidFling(player)
                 end
             end
-            if typeof(SelectedTarget) == "Instance" and SelectedTarget.Character then
-                for _, v in pairs(SelectedTarget.Character:GetDescendants()) do
-                    if v:IsA("BasePart") then v.CanCollide = false end
-                end
-            end
-        end)
-    end)
-
-    pcall(function()
-        for _, child in ipairs(char:GetDescendants()) do
-            if child:IsA("BasePart") then
-                child.CustomPhysicalProperties = PhysicalProperties.new(100, 0.3, 0.5)
-            end
         end
-    end)
-
-    local bambam = Instance.new("BodyAngularVelocity")
-    bambam.Name = "BlackCatTargetFling"
-    bambam.Parent = root
-    bambam.AngularVelocity = Vector3.new(99999, 99999, 99999)
-    bambam.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bambam.P = math.huge
-
-    for _, v in ipairs(char:GetChildren()) do
-        if v:IsA("BasePart") then
-            v.Massless = true
-            v.Velocity = Vector3.zero
-            v.AssemblyLinearVelocity = Vector3.zero
-        end
+    elseif typeof(SelectedTarget) == "Instance" and SelectedTarget.Parent == Players then
+        SkidFling(SelectedTarget)
     end
 
-    local flingDiedConn = nil
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        flingDiedConn = humanoid.Died:Connect(function() FlingExecuting = false end)
-    end
+    flingRunning = false
+    TargetFlingBtn.Text = " Execute Fling"
+    TargetFlingBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+end
 
-    task.spawn(function()
-        if SelectedTarget == "ALL" then
-            local validTargets = {}
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer then
-                    local tChar = p.Character
-                    local tRoot = getRoot(tChar)
-                    if tChar and tRoot and tChar:FindFirstChildOfClass("Humanoid") and tChar:FindFirstChildOfClass("Humanoid").Health > 0 then
-                        if tRoot.Position.Y > -50 and not isTooFarFromMap(tRoot) then
-                            table.insert(validTargets, p)
-                        end
-                    end
-                end
-            end
-
-            for _, tPlayer in ipairs(validTargets) do
-                if not FlingExecuting then break end
-                local targetStartTime = tick()
-                local loopCount = 0
-                while FlingExecuting and (tick() - targetStartTime < 1.8) do
-                    local tChar = tPlayer.Character
-                    local tRoot = getRoot(tChar)
-                    local currentRoot = getRoot(LocalPlayer.Character)
-                    if not tChar or not tRoot or not tChar:FindFirstChildOfClass("Humanoid") or tChar:FindFirstChildOfClass("Humanoid").Health <= 0 then break end
-                    if tRoot.Position.Y < -50 or isTooFarFromMap(tRoot) then break end
-                    if not currentRoot or not humanoid or humanoid.Health <= 0 then break end
-                    
-                    loopCount = loopCount + 1
-                    local offsetFactor = (loopCount % 2 == 0) and 2 or -2
-                    pcall(function()
-                        local tVel = tRoot.Velocity
-                        currentRoot.CFrame = tRoot.CFrame + (tRoot.CFrame.LookVector * offsetFactor) + Vector3.new(tVel.X * 0.1, 0.5, tVel.Z * 0.1)
-                        bambam.AngularVelocity = Vector3.new(99999, 99999, 99999)
-                        currentRoot.Velocity = Vector3.new(0, 50, 0)
-                    end)
-                    task.wait(0.05)
-                end
-            end
-        else
-            local targetPlayer = SelectedTarget
-            if targetPlayer and targetPlayer.Parent then
-                local tChar = targetPlayer.Character
-                local tRoot = getRoot(tChar)
-                if tRoot and tRoot.Position.Y > -50 and not isTooFarFromMap(tRoot) then
-                    local startTime = tick()
-                    local loopCount = 0
-                    while FlingExecuting and (tick() - startTime < 2.2) do
-                        tChar = targetPlayer.Character
-                        tRoot = getRoot(tChar)
-                        local currentRoot = getRoot(LocalPlayer.Character)
-                        if not tChar or not tRoot or not tChar:FindFirstChildOfClass("Humanoid") or tChar:FindFirstChildOfClass("Humanoid").Health <= 0 then break end
-                        if tRoot.Position.Y < -50 or isTooFarFromMap(tRoot) then break end
-                        if not currentRoot or not humanoid or humanoid.Health <= 0 then break end
-                        
-                        loopCount = loopCount + 1
-                        local offsetFactor = (loopCount % 2 == 0) and 2 or -2
-                        pcall(function()
-                            local tVel = tRoot.Velocity
-                            currentRoot.CFrame = tRoot.CFrame + (tRoot.CFrame.LookVector * offsetFactor) + Vector3.new(tVel.X * 0.1, 0.5, tVel.Z * 0.1)
-                            bambam.AngularVelocity = Vector3.new(99999, 99999, 99999)
-                            currentRoot.Velocity = Vector3.new(0, 50, 0)
-                        end)
-                        task.wait(0.05)
-                    end
-                end
-            end
-        end
-
-        FlingExecuting = false
-        if flingDiedConn then flingDiedConn:Disconnect() end
-        if flingNoclipConn then flingNoclipConn:Disconnect() end
-
-        pcall(function()
-            if bambam then bambam:Destroy() end
-            local c = LocalPlayer.Character
-            if c then
-                local r = getRoot(c)
-                if r then
-                    r.Anchored = true
-                    r.Velocity = Vector3.zero
-                    r.RotVelocity = Vector3.zero
-                    r.AssemblyLinearVelocity = Vector3.zero
-                    r.AssemblyAngularVelocity = Vector3.zero
-                end
-                task.wait(0.15)
-                for _, v in ipairs(c:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        v.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5)
-                        v.Massless = false
-                        v.Velocity = Vector3.zero
-                        v.RotVelocity = Vector3.zero
-                        v.AssemblyLinearVelocity = Vector3.zero
-                        v.AssemblyAngularVelocity = Vector3.zero
-                        v.CanCollide = true
-                    end
-                end
-                if r then
-                    if originalPos and originalPos.Position.Y > -30 and not isTooFarFromMap(r) then
-                        r.CFrame = originalPos
-                    else
-                        r.CFrame = CFrame.new(0, 10, 0)
-                    end
-                    r.Velocity = Vector3.zero
-                    r.RotVelocity = Vector3.zero
-                    r.AssemblyLinearVelocity = Vector3.zero
-                    r.AssemblyAngularVelocity = Vector3.zero
-                end
-                task.wait(0.1)
-                if r then r.Anchored = false end
-            end
-        end)
-
-        TargetFlingBtn.Text = "  Execute Fling"
-        TargetFlingBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    end)
 end
 
 TargetFlingBtn.MouseButton1Click:Connect(RunFlingLogic)
